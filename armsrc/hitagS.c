@@ -1348,8 +1348,7 @@ void ReadHitagS(hitag_function htf, hitag_data *htd, bool ledcontrol) {
 
     lf_finalize(ledcontrol);
 
-    // TODO reply_mix(CMD_ACK, 1, 0, 0, 0, 0); and send dump as well, to be decoded in the client
-    reply_mix(CMD_ACK, 0, 0, 0, 0, 0);
+    reply_mix(CMD_ACK, 1, 0, 0, (uint8_t *)tag.pages, 64 * 4);
 }
 
 /*
