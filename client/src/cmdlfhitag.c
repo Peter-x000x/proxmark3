@@ -389,7 +389,7 @@ static void printHitagSConfiguration(uint8_t con0, uint8_t con1, uint8_t con2) {
     printInfo("Encoding    : ", _YELLOW_("Manchester"), _YELLOW_("Biphase"), NULL, NULL, con1, 0x40);
 
     // Data rate
-    printInfo("Page reading: ", _YELLOW_("4 kBit"), _YELLOW_("8 kBit"), _YELLOW_("2 kBit"), _YELLOW_("2 kBit and Pigeon Race Standard"), con1, 0x30);
+    printInfo("Data rate   : ", _YELLOW_("4 kBit"), _YELLOW_("8 kBit"), _YELLOW_("2 kBit"), _YELLOW_("2 kBit and Pigeon Race Standard"), con1, 0x30);
 
     // Data rate
     printInfo("Page reading: ", _YELLOW_("TTF Mode disabled (= RTF Mode)"), _YELLOW_("Page 4, Page 5"), _YELLOW_("Page 4, Page 5, Page 6, Page 7"), _YELLOW_("Page 4"), con1, 0xC0);
