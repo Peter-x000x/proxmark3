@@ -324,6 +324,94 @@ static int CmdLFHitagSim(const char *Cmd) {
     return PM3_SUCCESS;
 }
 
+static int getPositionOfFirstSetBit(uint8_t mask) {
+    for (uint8_t i = 0; i < 8; i++) {
+        if ((mask >> i) & 1) {
+            return i;
+        }
+    }
+    
+    return -1;
+} 
+
+static void printInfo(const char* header, const char* infoFalse, const char* info1, const char* info2, const char* info3, uint8_t config, uint8_t mask) {
+
+    char msg[100];
+    strcpy(msg, header);
+    
+    uint8_t foo = (config & mask) >> (getPositionOfFirstSetBit(mask));
+    switch (foo) {
+        case 0:
+            strcat(msg + strlen(msg), infoFalse);
+            break;
+        case 1:
+            strcat(msg + strlen(msg), info1);
+            break;
+        case 2:
+            strcat(msg + strlen(msg), info2);
+            break;
+        case 3:
+            strcat(msg + strlen(msg), info3);
+            break;
+    }
+    
+    PrintAndLogEx(SUCCESS, "%s", msg);
+    memset(msg, 0, sizeof(msg));
+}
+
+static char* printConfigBits(uint8_t config) {
+    static char configBits[9];
+    char *bs = configBits;
+    for (uint8_t i = 0 ; i < 8 ; i++) {
+        snprintf(bs, sizeof(configBits) - i, "%1d", (config >> (7 - i)) & 1);
+        bs++;
+    }
+    return configBits;
+}
+
+static void printHitagSConfiguration(uint8_t con0, uint8_t con1, uint8_t con2) {    
+    PrintAndLogEx(INFO, "\n\nHitagS tag information");
+    PrintAndLogEx(INFO, "------------------------------------");
+
+    //con0 byte
+    PrintAndLogEx(SUCCESS, "CON0 byte   : 0x%02X [ %s ]", con0, printConfigBits(con0));
+    PrintAndLogEx(SUCCESS, "CON1 byte   : 0x%02X [ %s ]", con1, printConfigBits(con1));
+    PrintAndLogEx(SUCCESS, "CON2 byte   : 0x%02X [ %s ]", con2, printConfigBits(con2));
+    
+    PrintAndLogEx(INFO, "------------------------------------");
+    // memory type
+    printInfo("Memory Type : ", _YELLOW_("32 Bit"), _YELLOW_("256 Bit"), _YELLOW_("2048 Bit"), _YELLOW_("UNKNOWN"), con0, 0x03);
+
+    // Authentication
+    printInfo("Mode        : ", _YELLOW_("Plain"), _YELLOW_("Authentication"), NULL, NULL, con1, 0x80);
+
+    // encoding
+    printInfo("Encoding    : ", _YELLOW_("Manchester"), _YELLOW_("Biphase"), NULL, NULL, con1, 0x40);
+
+    // Data rate
+    printInfo("Page reading: ", _YELLOW_("4 kBit"), _YELLOW_("8 kBit"), _YELLOW_("2 kBit"), _YELLOW_("2 kBit and Pigeon Race Standard"), con1, 0x30);
+
+    // Data rate
+    printInfo("Page reading: ", _YELLOW_("TTF Mode disabled (= RTF Mode)"), _YELLOW_("Page 4, Page 5"), _YELLOW_("Page 4, Page 5, Page 6, Page 7"), _YELLOW_("Page 4"), con1, 0xC0);
+
+    // OTP
+    printInfo("Access right: ", _GREEN_("RW"), "CON 1: " _BRIGHT_YELLOW_("Read Only") "; CON 2: OTP " _RED_("FIXED / IRREVERSIBLE"), NULL, NULL, con1, 0x01);
+
+    PrintAndLogEx(INFO, "------------------------------------");
+
+    // page access
+    printInfo("Page 4,5    : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x80);
+    printInfo("Page 6,7    : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x40);
+    printInfo("Page 8-11   : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x20);
+    printInfo("Page 12-15  : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x10);
+    printInfo("Page 16-23  : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x08);
+    printInfo("Page 24-31  : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x04);
+    printInfo("Page 32-47  : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x02);
+    printInfo("Page 48-63  : ", _GREEN_("RW"), _BRIGHT_YELLOW_("Read Only"), NULL, NULL, con2, 0x01);
+
+    PrintAndLogEx(INFO, "------------------------------------");
+}
+
 static void printHitag2Configuration(uint8_t config) {
 
     char msg[100];
@@ -624,9 +712,15 @@ static int CmdLFHitagReader(const char *Cmd) {
     PrintAndLogEx(SUCCESS, " UID: " _YELLOW_("%08x"), id);
 
     if (htf != RHT2F_UID_ONLY) {
-
-        // block3, 1 byte
-        printHitag2Configuration(data[4 * 3]);
+        if (cmd == CMD_LF_HITAGS_READ) {
+            // page1, byte 4, 3 and 2
+            printHitagSConfiguration(data[(4 * 1) + 0], data[(4 * 1) + 1], data[(4 * 1) + 2]);
+        }
+        else
+        {
+            // block3, 1 byte
+            printHitag2Configuration(data[4 * 3]);
+        }
 
         // print data
         print_hex_break(data, 48, 4);
