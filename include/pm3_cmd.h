@@ -268,10 +268,12 @@ typedef struct {
     uint8_t data[];
 } PACKED lf_nrzsim_t;
 
+#define HITAGS_DATA_SIZE 256
+
 typedef struct {
     uint8_t type;
     uint16_t len;
-    uint8_t *data;
+    uint8_t data[HITAGS_DATA_SIZE];
 } PACKED lf_hitag_t;
 
 typedef struct {

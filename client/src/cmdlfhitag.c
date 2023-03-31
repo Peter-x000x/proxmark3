@@ -259,8 +259,9 @@ static int CmdLFHitagEload(const char *Cmd) {
 
     // check dump len..
     if (bytes_read == 48 ||  bytes_read == 4 * 64) {
+        size_t datasize = (HITAGS_DATA_SIZE < bytes_read) ? HITAGS_DATA_SIZE : bytes_read;
 
-        lf_hitag_t *payload =  calloc(1, sizeof(lf_hitag_t) + bytes_read);
+        lf_hitag_t *payload =  calloc(1, sizeof(lf_hitag_t));
 
         if (use_ht1)
             payload->type = 1;
@@ -271,11 +272,12 @@ static int CmdLFHitagEload(const char *Cmd) {
         if (use_htm)
             payload->type = 4;
 
-        payload->len = bytes_read;
-        memcpy(payload->data, dump, bytes_read);
+        payload->len = datasize;
+        
+        memcpy(payload->data, dump, datasize);
 
         clearCommandBuffer();
-        SendCommandNG(CMD_LF_HITAG_ELOAD, (uint8_t *)payload, 3 + bytes_read);
+        SendCommandNG(CMD_LF_HITAG_ELOAD, (uint8_t *)payload, sizeof(lf_hitag_t));
         free(payload);
     } else {
         PrintAndLogEx(ERR, "error, wrong dump file size. got %zu", bytes_read);
